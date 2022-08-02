@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+## CHANGE THESE
+export MAPR_HOST_IP=172.31.15.189
+export MAPR_CLUSTER=core.demo.df
+
 # NO NEED TO CHANGE THESE
 export MAPR_UID=5000
 export MAPR_GID=5000
@@ -11,10 +15,6 @@ export MAPR_MOUNT_PATH=/mapr
 export MAPR_DATA_PATH=/data
 
 export DEBIAN_FRONTEND=noninteractive
-
-## CHANGE THESE
-export MAPR_HOST_IP=10.1.0.48
-export MAPR_CLUSTER=dfcore.datafabric.io
 
 # System pre-requisites
 sudo apt update; sudo apt install -y ca-certificates locales locales syslinux syslinux-utils
@@ -43,6 +43,10 @@ wget -O - https://package.mapr.hpe.com/releases/pub/maprgpg.key | sudo apt-key a
 echo 'deb https://package.mapr.hpe.com/releases/v7.0.0/ubuntu binary bionic' | sudo tee -a /etc/apt/sources.list
 echo 'deb https://package.mapr.hpe.com/releases/MEP/MEP-8.1.0/ubuntu binary bionic' | sudo tee -a /etc/apt/sources.list
 sudo apt update; sudo apt upgrade -y
+
+# Workaround for outdated libssl package
+wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
 
 # Install only the client packages
 sudo apt install -y mapr-client mapr-posix-client-basic

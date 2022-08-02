@@ -61,7 +61,7 @@ sudo mkdir ${MAPR_DATA_PATH}
 
 echo "${MAPR_HOST}" | sudo tee /etc/hostname 
 
-IP=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+IP=$(/sbin/ip -o -4 addr list ens5 | awk '{print $4}' | cut -d/ -f1)
 HOSTNAME=$(hostname -f)
 head -n -1  /etc/hosts > tmp.txt && sudo cp tmp.txt /etc/hosts && rm tmp.txt
 echo "$IP  ${MAPR_HOST} ${HOSTNAME}" | sudo tee -a /etc/hosts
@@ -69,5 +69,5 @@ echo "session       required       pam_limits.so" | sudo tee -a /etc/pam.d/commo
 
 sudo /opt/mapr/server/configure.sh -N ${MAPR_HOST} -C ${MAPR_HOST}:7222 -Z ${MAPR_HOST} -u ${MAPR_USER} -g ${MAPR_GROUP} -genkeys -secure -dare
 
-apt install -y mapr-posix-client-basic
-service mapr-posix-client-basic start
+sudo apt install -y mapr-posix-client-basic
+sudo systemctl enable --now mapr-posix-client-basic
