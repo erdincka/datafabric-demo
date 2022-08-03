@@ -1,6 +1,6 @@
 .DS_Store
+.ipynb_checkpoints
 LatestDemoLicense-M7.txt
 venv
 ez_*
 ssl_truststore
-mapr-client-*
