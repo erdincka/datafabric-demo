@@ -1,3 +1,6 @@
 .DS_Store
 LatestDemoLicense-M7.txt
 venv
+ez_*
+ssl_truststore
+mapr-client-*

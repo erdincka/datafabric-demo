@@ -1,29 +1,25 @@
-# Data Fabric Demo Env
+# Data Fabric Demo Env - WORK IN PROGRESS
 
-AWS Ubuntu 20.04 AMI.
+## Server on Ubuntu 20.04
 
-Use keypair for passwordless access.
+SSH keypair for passwordless access
 
-## Server Installation Notes
+### Server Requirements
 
-Select an instance with 16 core 64GB Memory.
+Minimum node with 16 core 64GB Memory, 120GB OS disk + 100GB+ data disk
 
-60GB OS disk + 30GB data disk (or size of your working data set x3)
-
-Use ./df-in-ubuntu.sh to install.
+- Run [Single Node on AWS](./01a-df-on-aws.ipynb)
+- Run [Single Node on Ubuntu Host](./df-on-ubuntu.sh)
 
 ## Client Installation Notes
 
-Select an instance with 4 core 16GB Memory.
-
-30GB OS disk
-
-Use ./client-on-ubuntu.sh to install.
+- Set up [Client on Ubuntu](./client-on-ubuntu.sh)
+- Set up [Client on MacOS ARM](./02a-df-client-armmac.ipynb)
 
 ## Work in progress
 
-Let me know any issues.
+Let me know any issues (kaya@hpe.com)
 
 ## TODO
 
-Client for M1 Macs.
+A lot
