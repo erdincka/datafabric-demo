@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 
 ## CHANGE THESE
-export MAPR_HOST_IP=172.31.15.189
-export MAPR_CLUSTER=core.demo.df
+export MAPR_HOST_IP=172.31.18.168
+export MAPR_CLUSTER=demo.df.io
 
-# NO NEED TO CHANGE THESE
+echo "
+-----BEGIN RSA PRIVATE KEY-----
+REPLACE WITH YOUR PRIVATE KEY
+-----END RSA PRIVATE KEY-----" >> ~/private.key
+chmod 600 ~/private.key
+
+
+# DO NOT CHANGE THESE
 export MAPR_UID=5000
 export MAPR_GID=5000
 export MAPR_USER=mapr
@@ -33,10 +40,10 @@ sudo apt install -y --no-install-recommends gnupg2 iproute2 \
     default-jdk openssh-client wamerican lsb-release apt-utils rpcbind nfs-common cron
 
 # Enable password auth
-sudo sed -i 's/#PasswordAuthentication/PasswordAuthentication/' /etc/ssh/sshd_config
-sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-sudo sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
-sudo systemctl restart sshd
+# sudo sed -i 's/#PasswordAuthentication/PasswordAuthentication/' /etc/ssh/sshd_config
+# sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+# sudo sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
+# sudo systemctl restart sshd
 
 # Enable package repo
 wget -O - https://package.mapr.hpe.com/releases/pub/maprgpg.key | sudo apt-key add -
@@ -44,9 +51,9 @@ echo 'deb https://package.mapr.hpe.com/releases/v7.0.0/ubuntu binary bionic' | s
 echo 'deb https://package.mapr.hpe.com/releases/MEP/MEP-8.1.0/ubuntu binary bionic' | sudo tee -a /etc/apt/sources.list
 sudo apt update; sudo apt upgrade -y
 
-# Workaround for outdated libssl package
-wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
-sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+# Workaround for outdated libssl package - for 22.04
+# wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+# sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
 
 # Install only the client packages
 sudo apt install -y mapr-client mapr-posix-client-basic
@@ -60,8 +67,8 @@ sudo mkdir ${MAPR_DATA_PATH}
 echo "${MAPR_HOST_IP} ${MAPR_CLUSTER}" | sudo tee -a /etc/hosts
 
 ### SECURE CLUSTER ONLY -- YOU WILL NEED TO ENTER PASSWORD HERE AT: "ssh-copy-id" line
-  [ -f ~/.ssh/id_rsa ] || ssh-keygen -t rsa -b 2048 -N "" -f ~/.ssh/id_rsa
-  ssh-copy-id ${MAPR_USER}@$MAPR_HOST_IP
+  # [ -f ~/.ssh/id_rsa ] || ssh-keygen -t rsa -b 2048 -N "" -f ~/.ssh/id_rsa
+  # ssh-copy-id ${MAPR_USER}@$MAPR_HOST_IP
 
   scp ${MAPR_USER}@$MAPR_HOST_IP:/opt/mapr/conf/ssl_truststore ssl_truststore
   scp ${MAPR_USER}@$MAPR_HOST_IP:/opt/mapr/conf/ssl-client.xml ssl-client.xml
@@ -73,9 +80,28 @@ echo "${MAPR_HOST_IP} ${MAPR_CLUSTER}" | sudo tee -a /etc/hosts
   maprlogin password -user mapr
 ### SECURE CLUSTER ONLY
 
-### NON-SECURE CLUSTER ONLY
-  sudo /opt/mapr/server/configure.sh -c -N ${MAPR_CLUSTER} -C ${MAPR_HOST_IP}:7222 -HS ${MAPR_HOST_IP} -u mapr -g mapr
-### NON-SECURE CLUSTER ONLY
-
 # Enable services
+sudo maprlogin password -user mapr -out /opt/mapr/conf/maprfuseticket
 sudo systemctl restart mapr-posix-client-basic
+
+sudo apt install -y python3-pip
+sudo pip install --global-option=build_ext --global-option="--library-dirs=/opt/mapr/lib" --global-option="--include-dirs=/opt/mapr/include/" mapr-streams-python
+pip install maprdb-python-client
+
+# Spark and Delta Lake
+
+## Install livy and airflow on the server - https://github.com/fbercken/fingrid
+
+sudo apt install -y mapr-spark
+wget https://repo1.maven.org/maven2/io/delta/delta-core_2.12/1.2.0/delta-core_2.12-1.2.0.jar
+pip3 install pyspark==3.2.0
+pip3 install importlib-metadata
+pip3 install delta_spark
+pip3 install avro
+
+wget https://repository.mapr.com/nexus/content/groups/mapr-public/org/apache/spark/spark-sql_2.12/3.2.0.0-eep-810/spark-sql_2.12-3.2.0.0-eep-810.jar
+wget https://repository.mapr.com/nexus/content/groups/mapr-public/org/apache/spark/spark-avro_2.12/3.2.0.0-eep-810/spark-avro_2.12-3.2.0.0-eep-810.jar
+
+# Create volume /mydata 
+# create folder resources and copy telemetry.avsc to /mydata/resources
+# follow README.md on github

@@ -2,5 +2,11 @@
 .ipynb_checkpoints
 LatestDemoLicense-M7.txt
 venv
-ez_*
+*.pem
 ssl_truststore
+maprtrustcreds.conf
+maprtrustcreds.jceks
+ssl-client.xml
+*.jar
+*.tar.gz
+*.tgz
