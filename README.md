@@ -4,22 +4,29 @@
 
 SSH keypair for passwordless access
 
-### Server Requirements
+### Server Installation
 
 Minimum node with 16 core 64GB Memory, 120GB OS disk + 100GB+ data disk
 
-- Run [Single Node on AWS](./01a-df-on-aws.ipynb)
-- Run [Single Node on Ubuntu Host](./df-on-ubuntu.sh)
+- Run [Create Server Node on AWS](./00a-create-dfserver-aws.ipynb)
+- Run [Install DF on Single Node on Ubuntu Host](./server-on-ubuntu.sh)
 
 ## Client Installation Notes
 
+- Run [Create Client Node on AWS](./02a-create-dfclient-aws.ipynb)
 - Set up [Client on Ubuntu](./client-on-ubuntu.sh)
-- Set up [Client on MacOS ARM](./02a-df-client-armmac.ipynb)
+- Set up [Client on MacOS ARM](./client-on-armmac.sh)
 
-## Work in progress
-
-Let me know any issues (kaya@hpe.com)
-
-## TODO
+## ISSUES
 
 A lot
+
+[ ] MacOS on Apple Silicon seg11 fault with Kafka consumer
+
+[ ] After reboot of DF Server Node, update MAPR_EXTERNAL in /opt/mapr/conf/env_override.sh with new Public IP, and run following:
+
+- `systemctl mapr-zookeeper restart`
+
+- `systemctl mapr-warden restart`
+
+- `sudo /opt/mapr/server/configure.sh -R`
