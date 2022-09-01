@@ -68,7 +68,7 @@ grep -v "MAPR_EXTERNAL" /opt/mapr/conf/env_override.sh | sudo tee /opt/mapr/conf
 echo "export MAPR_EXTERNAL=$PUBLIC_IP" | sudo tee -a /opt/mapr/conf/env_override.sh
 sudo /opt/mapr/server/configure.sh -R
 
-for file in "ssl_truststore" "ssl-client.xml" "maprtrustcreds.jceks" "maprtrustcreds.conf" "ssl_truststore.pem"
+for file in "ssl_truststore" "ssl_truststore.pem" "ssl-client.xml" "maprtrustcreds.jceks" "maprtrustcreds.conf"
 do
   sudo cp /opt/mapr/conf/$file /home/ubuntu/
   sudo chown ubuntu /home/ubuntu/$file
