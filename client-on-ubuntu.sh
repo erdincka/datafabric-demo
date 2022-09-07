@@ -57,14 +57,21 @@ sudo mkdir ${MAPR_DATA_PATH}
 echo "${MAPR_HOST_IP} ${MAPR_CLUSTER}" | sudo tee -a /etc/hosts
 
 ### SECURE CLUSTER ONLY -- YOU WILL NEED TO ENTER PASSWORD HERE AT: "ssh-copy-id" line
-  [ -f ~/.ssh/id_rsa ] || ssh-keygen -t rsa -b 2048 -N "" -f ~/.ssh/id_rsa
-  ssh-copy-id ${MAPR_USER}@${MAPR_HOST_IP}
+  # [ -f ~/.ssh/id_rsa ] || ssh-keygen -t rsa -b 2048 -N "" -f ~/.ssh/id_rsa
+  # ssh-copy-id ${MAPR_USER}@${MAPR_HOST_IP}
 
-  scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/ssl_truststore ssl_truststore
-  scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/ssl_truststore.pem ssl_truststore.pem
-  scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/ssl-client.xml ssl-client.xml
-  scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/maprtrustcreds.jceks maprtrustcreds.jceks
-  scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/maprtrustcreds.conf maprtrustcreds.conf
+  # scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/ssl_truststore ssl_truststore
+  # scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/ssl_truststore.pem ssl_truststore.pem
+  # scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/ssl-client.xml ssl-client.xml
+  # scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/maprtrustcreds.jceks maprtrustcreds.jceks
+  # scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/maprtrustcreds.conf maprtrustcreds.conf
+
+
+for file in "ssl_truststore" "ssl_truststore.pem" "ssl-client.xml" "maprtrustcreds.jceks" "maprtrustcreds.conf"
+do
+  scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/$file ~/
+  sudo cp ~/$file /opt/mapr/conf/
+done
 
   sudo mv ssl_truststore ssl_truststore.pem ssl-client.xml maprtrustcreds.jceks maprtrustcreds.conf /opt/mapr/conf/
   sudo /opt/mapr/server/configure.sh -c -N ${MAPR_CLUSTER} -C ${MAPR_HOST_IP}:7222 -HS ${MAPR_HOST_IP} -u mapr -g mapr -secure

@@ -29,4 +29,4 @@ while True:
      p.produce('mytopic', json.dumps(json_dict).encode('utf-8'))
      p.flush()
      index += 1
-     sleep(0.1)
+     sleep(0.5)
