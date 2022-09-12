@@ -79,7 +79,7 @@ done
 ### SECURE CLUSTER ONLY
 
 # Enable services
-sudo maprlogin password -user mapr -out /opt/mapr/conf/maprfuseticket
+sudo maprlogin generateticket -type service -out /opt/mapr/conf/maprfuseticket -duration 30:0:0 -renewal 90:0:0 -user mapr
 sudo systemctl restart mapr-posix-client-basic
 
 sudo apt install -y python3-pip

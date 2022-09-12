@@ -15,7 +15,7 @@ ENV container docker
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Core packages
-RUN apt update; apt install -y ca-certificates locales locales syslinux syslinux-utils
+RUN apt update; apt install -y ca-certificates locales syslinux syslinux-utils
 
 ENV SHELL=/bin/bash \
     LC_ALL=en_US.UTF-8 \
@@ -60,9 +60,10 @@ RUN sed -i 's!/proc/meminfo!/opt/mapr/conf/meminfofake!' /opt/mapr/server/initsc
 RUN mkdir ${MAPR_MOUNT_PATH}
 RUN mkdir ${MAPR_DATA_PATH}
 
+ENV LD_LIBRARY_PATH=/opt/mapr/lib
 COPY start-server.sh /start-server.sh
 RUN chmod +x /start-server.sh
 
-EXPOSE 8580 8998 9998 8042 8888 8088 9997 10001 8190 8243 22 4040 7221 8090 5660 8443 19888 50060 18080 8032 14000 19890 10000 11443 12000 8081 8002 8080 31010 8044 8047 11000 2049 8188 7077 7222 5181 5661 5692 5724 5756 10020 50000-50050 9001 5693 9002 31011 5678 8082 8087 8780 8793 9083 50111
+# EXPOSE 8580 8998 9998 8042 8888 8088 9997 10001 8190 8243 22 4040 7221 8090 5660 8443 19888 50060 18080 8032 14000 19890 10000 11443 12000 8081 8002 8080 31010 8044 8047 11000 2049 8188 7077 7222 5181 5661 5692 5724 5756 10020 50000-50050 9001 5693 9002 31011 5678 8082 8087 8780 8793 9083 50111
 
 CMD ["/lib/systemd/systemd", "--system --unit=basic.target"]

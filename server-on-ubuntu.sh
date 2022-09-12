@@ -2,14 +2,14 @@
 
 CLUSTER_NAME=demo.df.io
 
-sudo apt update && sudo apt upgrade -y
+sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y
 sudo chmod u+s /sbin/unix_chkpwd
 
-[ -f mapr-setup.sh ] || wget -O mapr-setup.sh https://package.mapr.hpe.com/releases/installer/mapr-setup.sh; chmod +x mapr-setup.sh
-[ -f /opt/mapr/installer/bin/mapr-installer-cli ] || sudo /home/ubuntu/mapr-setup.sh -y
-[ -f /home/ubuntu/.ssh/id_rsa ] || ssh-keygen -N '' -f /home/ubuntu/.ssh/id_rsa -b 2048 -t rsa
+[ -f ./mapr-setup.sh ] || wget -O mapr-setup.sh https://package.mapr.hpe.com/releases/installer/mapr-setup.sh; chmod +x mapr-setup.sh
+[ -f /opt/mapr/installer/bin/mapr-installer-cli ] || sudo ./mapr-setup.sh -y
+# [ -f /home/ubuntu/.ssh/id_rsa ] || ssh-keygen -N '' -f /home/ubuntu/.ssh/id_rsa -b 2048 -t rsa
 
-## AWS keypair
+## Private key for SSH login
 echo "
 -----BEGIN RSA PRIVATE KEY-----
 REPLACE WITH YOUR PRIVATE KEY
@@ -22,11 +22,11 @@ environment:
 config:
   hosts:
     - $(hostname -f)
-  ssh_id: ubuntu
+  ssh_id: ${USER}
   ssh_password: mapr
   cluster_admin_id: mapr
   cluster_admin_password: mapr
-  ssh_key_file: /home/ubuntu/private.key
+  ssh_key_file: ${HOME}/private.key
   db_admin_user: root
   db_admin_password: mapr
   log_admin_password: mapr
@@ -70,6 +70,6 @@ sudo /opt/mapr/server/configure.sh -R
 
 for file in "ssl_truststore" "ssl_truststore.pem" "ssl-client.xml" "maprtrustcreds.jceks" "maprtrustcreds.conf"
 do
-  sudo cp /opt/mapr/conf/$file /home/ubuntu/
-  sudo chown ubuntu /home/ubuntu/$file
+  sudo cp /opt/mapr/conf/$file ${HOME}/
+  sudo chown ubuntu ${HOME}/$file
 done

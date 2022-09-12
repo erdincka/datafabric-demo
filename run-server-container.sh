@@ -7,17 +7,18 @@ export PORTS='-p 8580:8580 -p 8998:8998 -p 9998:9998 -p 8042:8042 -p 8888:8888 -
   -p 5756:5756 -p 10020:10020 -p 50000-50050:50000-50050 -p 9001:9001 -p 5693:5693 -p 9002:9002 -p 31011:31011 -p 5678:5678 -p 8082:8082 -p 8087:8087
   -p 8780:8780 -p 8793:8793 -p 9083:9083 -p 50111:50111'
 
-CID=$(docker ps --filter "ancestor=erdincka/datafabric" -q)
+CID=$(docker ps --filter "ancestor=local/dfserver" -q)
 
-[ -z ${CID} ] && docker run -d --platform linux/amd64 \
+[ -z ${CID} ] && docker run -d --rm --platform linux/amd64 \
   --device /dev/fuse \
   --cap-add SYS_ADMIN \
   --cgroupns=host \
   --privileged \
   --tmpfs /tmp --tmpfs /run --tmpfs /run/lock \
+  -e LD_LIBRARY_PATH=/opt/mapr/lib \
   -v /sys/fs/cgroup:/sys/fs/cgroup \
-  ${PORTS} erdincka/datafabric
+  ${PORTS} local/dfserver
 
-CID=$(docker ps --filter "ancestor=erdincka/datafabric" -q)
+CID=$(docker ps --filter "ancestor=local/dfserver" -q)
 
-docker exec -it $CID /bin/bash
+# docker exec -it $CID /bin/bash
