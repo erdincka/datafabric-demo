@@ -1,12 +1,14 @@
 # Data Fabric Demo Env - WORK IN PROGRESS
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/erdincka/datafabric-demo/HEAD)
+
 ## Server on Ubuntu 20.04
 
 SSH keypair for passwordless access
 
 ### Server Installation
 
-Minimum node with 16 core 64GB Memory, 120GB OS disk + 100GB+ data disk
+Minimum node with 16 core 64GB Memory, 150GB OS disk + 150GB+ data disk
 
 - Run [Create Server Node on AWS](./00a-create-dfserver-aws.ipynb)
 - Run [Install DF on Single Node on Ubuntu Host](./server-on-ubuntu.sh)

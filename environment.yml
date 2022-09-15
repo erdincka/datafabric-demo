@@ -1,0 +1,10 @@
+name: datafabricdemo-environment
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - pip
+  - pip:
+    - boto3
+    - requests 
+    - paramiko
