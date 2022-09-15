@@ -1,6 +1,6 @@
 # Requirements
 
-This site provides hands-on experience on a remote cluster. If you wish to create a single node test/demo cluster on your own AWS environment, you can follow the process [here](../00a-create-dfserver-aws.ipynb).
+This site provides hands-on experience on a remote cluster. If you wish to create a single node test/demo cluster on your own AWS environment, you can follow the process [here](https://nbviewer.org/github/erdincka/datafabric-demo/blob/main/00a-create-dfserver-aws.ipynb).
 
 ## Hardware
 
