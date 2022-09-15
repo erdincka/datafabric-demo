@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MAPR_CLUSTER=maprdemo.mapr.io
+MAPR_CLUSTER=demo.df.io
 MAPR_USER=mapr
 MAPR_GROUP=mapr
  

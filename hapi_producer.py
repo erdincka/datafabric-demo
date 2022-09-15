@@ -21,10 +21,10 @@ def getnextday(hapitime):
 
 def notification_from_metadata(meta):
     # Metadata example
-    #   "x_metaFileParsed": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG___.pkl",
-    #   "x_dataFileParsed": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG__20110411T170326254000_20110412T170326254000.npy",
-    #   "x_metaFile": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG___.json",
-    #   "x_dataFile": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG__20110411T170326254000_20110412T170326254000.bin",
+    #   "x_metaFileParsed": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG___.pkl",
+    #   "x_dataFileParsed": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG__20110411T170326254000_20110412T170326254000.npy",
+    #   "x_metaFile": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG___.json",
+    #   "x_dataFile": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG__20110411T170326254000_20110412T170326254000.bin",
     return dict(
         timestamp=meta["x_time.max"],
         metapath=meta["x_metaFileParsed"],
@@ -33,7 +33,7 @@ def notification_from_metadata(meta):
 
 
 # Data will be saved in Data Fabric using Fuse (filesystem)
-DFROOT = "/mapr/dfcore.datafabric.io/data"
+DFROOT = "/mapr/demo.df.io/data"
 CACHEDIR = os.path.join(
     DFROOT, "hapi-data"
 )  # this should exist with write permission to others
@@ -50,7 +50,7 @@ opts = {"logging": True, "cachedir": CACHEDIR}
 from mapr.ojai.storage.ConnectionFactory import ConnectionFactory
 
 connection_str = (
-    "dfcore.datafabric.io:5678?auth=basic;user=mapr;password=mapr;"
+    "demo.df.io:5678?auth=basic;user=mapr;password=mapr;"
     "ssl=true;"
     "sslCA=/opt/mapr/conf/ssl_truststore.pem;"
     "sslTargetNameOverride=ip-10-1-0-48.eu-west-2.compute.internal"

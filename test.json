@@ -172,12 +172,12 @@
   "x_time.min": "2011-04-11T17:03:26.254000Z",
   "x_time.max": "2011-04-12T17:03:26.254000Z",
   "x_requestDate": "2022-07-13T01:34:10",
-  "x_cacheDir": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi",
+  "x_cacheDir": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi",
   "x_downloadTime": 0.36102294921875,
   "x_readTime": 0.061391353607177734,
-  "x_metaFileParsed": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG___.pkl",
-  "x_dataFileParsed": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG__20110411T170326254000_20110412T170326254000.npy",
-  "x_metaFile": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG___.json",
-  "x_dataFile": "/mapr/dfcore.datafabric.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG__20110411T170326254000_20110412T170326254000.bin",
+  "x_metaFileParsed": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG___.pkl",
+  "x_dataFileParsed": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG__20110411T170326254000_20110412T170326254000.npy",
+  "x_metaFile": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG___.json",
+  "x_dataFile": "/mapr/demo.df.io/data/hapi-data/vires.services_hapi/CS_OPER_MAG__20110411T170326254000_20110412T170326254000.bin",
   "x_totalTime": 0.7188153266906738
 }

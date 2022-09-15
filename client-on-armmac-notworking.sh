@@ -2,8 +2,9 @@
 
 set -euo pipefail
 
+# Ensure you have paswordless ssh to the cluster_ip
 CLUSTER_NAME="demo.df.io"
-CLUSTER_IP="18.169.158.131"
+CLUSTER_IP="cldb.host.ip"
 
 echo "Install/Update packages"
 /usr/local/bin/brew update
@@ -27,7 +28,7 @@ export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH:-}:/opt/mapr/lib"
 echo "Get secure files"
 for file in "ssl_truststore" "ssl-client.xml" "maprtrustcreds.jceks" "maprtrustcreds.conf" "ssl_truststore.pem"
 do
-  scp dfdemos:~/$file .
+  scp $CLUSTER_IP:~/$file .
   sudo mv $file /opt/mapr/conf/
 done
 
