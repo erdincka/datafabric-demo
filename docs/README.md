@@ -1,5 +1,7 @@
 # Learning HPE Ezmeral Data Fabric
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/erdincka/datafabric-demo/main?labpath=00a-create-dfserver-aws.ipynb)
+
 [Introduction to Data Fabric](./01-IntroductionToDataFabric.md)
 
 [Sizing and Design Considerations](./02-SizingAndDesignConsiderations.md)
