@@ -9,11 +9,15 @@
 # Supported Data Types and APIs
 
 [HPE Ezmeral Data Fabric File Store](https://docs.datafabric.hpe.com/70/MapROverview/File-Store.html)
+
 [HPE Ezmeral Data Fabric Object Store](https://docs.datafabric.hpe.com/70/MapROverview/HPE-Ezmeral-Data-Fabric-Object-Store.html)
+
 [HPE Ezmeral Data Fabric Database](https://docs.datafabric.hpe.com/70/MapROverview/maprDB-overview.html)
+
 [HPE Ezmeral Data Fabric Streams](https://docs.datafabric.hpe.com/70/MapROverview/c_mapr_streams.html)
 
 [Developer's Reference](https://docs.datafabric.hpe.com/70/ReferenceGuide/DeveloperRef.html)
+
 [API Documentation](https://docs.datafabric.hpe.com/70/APIdocs.html)
 
 # Learning Resources
