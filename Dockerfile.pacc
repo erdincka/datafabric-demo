@@ -1,25 +1,21 @@
-FROM --platform=linux/amd64 maprtech/pacc:6.2.0_7.0.0_ubuntu18
+# try to develope my own pacc
+## 1.3.2021 by Dirk Derichsweiler#
 
-ENV MAPR_TZ="UTC" \
-  MAPR_CLUSTER=demo.df.io \
-  MAPR_CONTAINER_USER=mapr \
-  MAPR_CONTAINER_GROUP=mapr \
-  MAPR_CONTAINER_UID=5000 \
-  MAPR_CONTAINER_GID=5000 \
-  MAPR_CONTAINER_PASSWORD=mapr \
-  MAPR_MOUNT_PATH=/mapr \
-  MAPR_TICKETFILE_LOCATION=/tmp/mapr_ticket \
-  container=docker \
-  DEBIAN_FRONTEND=noninteractive
+FROM --platform=linux/amd64 rockylinux/rockylinux
 
-RUN wget -O - https://package.mapr.hpe.com/releases/pub/maprgpg.key | sudo apt-key add -
-RUN echo 'deb https://package.mapr.hpe.com/releases/v7.0.0/ubuntu binary bionic' >> /etc/apt/sources.list
-RUN echo 'deb https://package.mapr.hpe.com/releases/MEP/MEP-8.1.0/ubuntu binary bionic' >> /etc/apt/sources.list
-RUN apt update
+LABEL org.label-schema.schema-version=1.0 org.label-schema.name="CentOS Base Image" org.label-schema.vendor=CentOS org.label-schema.license=GPLv2 org.label-schema.build-date=20200809
 
-RUN apt install -y mapr-client mapr-posix-client-basic
+CMD ["/bin/bash"]
+ENV container=docker
 
-COPY ssl_truststore ssl_truststore.pem ssl-client.xml maprtrustcreds.jceks maprtrustcreds.conf /opt/mapr/conf/
-COPY run.sh /first_run.sh
-RUN chmod -x /opt/mapr/conf/env.sh
-RUN chmod +x /first_run.sh
+RUN yum install -y curl net-tools sudo wget which gnupg2 initscripts syslinux openssl file passwd diffutils redhat-lsb-core java-1.8.0-openjdk-devel && yum -q clean all
+
+# LABEL mapr.os=centos8 mapr.version=6.2.0 mapr.mep_version=7.0.0
+LABEL mapr.os=centos8 mapr.version=6.1.1 mapr.mep_version=6.3.4
+
+COPY mapr-setup.sh /opt/mapr/installer/docker/mapr-setup.sh
+
+# install all packages
+RUN /opt/mapr/installer/docker/mapr-setup.sh -r https://package.mapr.com/releases container client 6.1.1 6.3.4 mapr-client mapr-posix-client-container mapr-asynchbase mapr-hbase  mapr-spark mapr-kafka mapr-librdkafka
+
+ENTRYPOINT ["/opt/mapr/installer/docker/mapr-setup.sh" "container"]

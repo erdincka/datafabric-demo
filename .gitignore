@@ -10,3 +10,4 @@ ssl-client.xml
 *.jar
 *.tar.gz
 *.tgz
+*.lic
