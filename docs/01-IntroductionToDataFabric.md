@@ -25,3 +25,5 @@
 [Overview Documentation](https://docs.datafabric.hpe.com/70/MapROverview/c_overview_intro.html)
 
 [Learn on Demand](https://learn.ezmeral.software.hpe.com/data-fabric-essentials)
+
+[HPE Developer - Hack Shack Workshops](https://developer.hpe.com/hackshack/workshops)
