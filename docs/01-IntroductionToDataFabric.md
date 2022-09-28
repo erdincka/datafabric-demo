@@ -20,11 +20,11 @@
 
 [HPE Ezmeral Data Fabric Database - Overview](https://docs.datafabric.hpe.com/70/MapROverview/maprDB-overview.html)
 
-[HPE Ezmeral Data Fabric Database - Technical white paper](https://www.hpe.com/psnow/doc/a00125063enw)
-
 [HPE Ezmeral Data Fabric Streams - Overview](https://docs.datafabric.hpe.com/70/MapROverview/c_mapr_streams.html)
 
 [HPE Ezmeral Data Fabric Streams - Technical white paper](https://www.hpe.com/psnow/doc/a00124769enw)
+
+[HPE Ezmeral Data Fabric Ecosystem Components](https://docs.datafabric.hpe.com/70/c_ecosystem_intro.html)
 
 [Developer's Reference](https://docs.datafabric.hpe.com/70/ReferenceGuide/DeveloperRef.html)
 
