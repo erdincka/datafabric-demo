@@ -3,6 +3,7 @@
 CLUSTER_NAME=demo.df.io
 
 sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y
+
 sudo chmod u+s /sbin/unix_chkpwd
 
 [ -f ./mapr-setup.sh ] || wget -O mapr-setup.sh https://package.mapr.hpe.com/releases/installer/mapr-setup.sh; chmod +x mapr-setup.sh
@@ -63,6 +64,7 @@ config:
 echo y | sudo /opt/mapr/installer/bin/mapr-installer-cli install -nv -t /home/ubuntu/mapr.stanza
 [ -f /opt/mapr/bin/maprlogin ] && ( sleep 30; [ -f /tmp/maprticket_$(id -u) ] || (echo mapr | maprlogin password -user mapr) )
 
+## Only needed if clients from external (Internet) network access required
 PUBLIC_IP=$(curl http://ifconfig.me)
 grep -v "MAPR_EXTERNAL" /opt/mapr/conf/env_override.sh | sudo tee /opt/mapr/conf/env_override.sh
 echo "export MAPR_EXTERNAL=$PUBLIC_IP" | sudo tee -a /opt/mapr/conf/env_override.sh
