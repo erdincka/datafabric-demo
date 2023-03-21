@@ -61,6 +61,8 @@ config:
     mapr-mastgateway:
 " > ~/mapr.stanza
 
+echo "Wait for installer to be ready"; sleep 30
+
 echo y | sudo /opt/mapr/installer/bin/mapr-installer-cli install -nv -t /home/ubuntu/mapr.stanza
 [ -f /opt/mapr/bin/maprlogin ] && ( sleep 30; [ -f /tmp/maprticket_$(id -u) ] || (echo mapr | maprlogin password -user mapr) )
 

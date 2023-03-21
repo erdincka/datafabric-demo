@@ -1,7 +1,5 @@
 # Data Fabric Demo Env - WORK IN PROGRESS
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/erdincka/datafabric-demo/HEAD)
-
 ## Server on Ubuntu 20.04
 
 SSH keypair for passwordless access
@@ -10,8 +8,15 @@ SSH keypair for passwordless access
 
 Minimum node with 16 core 64GB Memory, 150GB OS disk + 150GB+ data disk
 
+Automated using jupyter notebook:
+
 - Run [Create Server Node on AWS](./00a-create-dfserver-aws.ipynb)
 - Run [Install DF on Single Node on Ubuntu Host](./server-on-ubuntu.sh)
+
+Manually install with ansible:
+
+- edit dfcore.ini file for your environment
+- run `ansible-playbook -K -v -i dfcore.ini server-install-manual.yaml`
 
 ## Client Installation Notes
 

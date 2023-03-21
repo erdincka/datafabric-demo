@@ -1,0 +1,371 @@
+---
+- name: DF Install
+  hosts: mapr
+  gather_facts: true
+  become: yes
+
+  tasks:
+    - name: ensure passwordless sudo for ansible user
+      shell: echo "{{ ansible_user }}   ALL=(ALL)   NOPASSWD:ALL" > /etc/sudoers.d/"{{ ansible_user }}"
+
+    - name: ensure group
+      ansible.builtin.group:
+        name: "{{ mapr_group }}"
+        state: present
+        gid: "{{ mapr_gid }}"
+
+    - name: ensure user
+      ansible.builtin.user:
+        name: "{{ mapr_user }}"
+        comment: Ezmeral Admin
+        uid: "{{ mapr_uid }}"
+        group: "{{ mapr_group }}"
+        groups: sudo
+        append: yes
+        shell: /bin/bash
+        password: "{{ mapr_pass | password_hash('sha512', 'secretsalt') }}"
+        update_password: on_create
+
+    - name: enable ssh key for mapr user
+      shell: |
+        [ -d ~{{ mapr_user }}/.ssh ] || mkdir ~{{ mapr_user }}/.ssh
+        [ -f ~{{ mapr_user }}/.ssh/authorized_keys ] || cp ~{{ ansible_user }}/.ssh/authorized_keys ~{{ mapr_user }}/.ssh/authorized_keys
+        chown -R {{ mapr_user }} ~{{ mapr_user }}/.ssh
+        chmod -R go-rwx ~{{ mapr_user }}/.ssh
+
+    - name: ensure passwordless sudo for admin user
+      ansible.builtin.lineinfile:
+        path: "/etc/sudoers.d/{{ mapr_user }}"
+        state: present
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        line: "{{ mapr_user }}  ALL=(ALL) NOPASSWD:ALL"
+        create: yes
+
+    - name: update packages
+      ansible.builtin.package:
+        name: "*"
+        state: latest
+        autoremove: true
+        update_cache: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: install jdk11
+      ansible.builtin.package:
+        name:
+          - openjdk-11-jdk
+        state: latest
+      when: ansible_facts['os_family'] == "Debian"
+
+    # - name: update PAM for sshd
+    #   lineinfile:
+    #     path: /etc/pam.d/sshd
+    #     state: present
+    #     owner: root
+    #     group: root
+    #     mode: 0644
+    #     backup: yes
+    #     regexp: /session\s*required\s*pam_loginuid.so/
+    #     line: session optional pam_loginuid.so
+
+    # - name: update PAM limits for session
+    #   lineinfile:
+    #     path: /etc/pam.d/common-session
+    #     state: present
+    #     owner: root
+    #     group: root
+    #     mode: 0644
+    #     backup: yes
+    #     line: session       required       pam_limits.so
+
+    # - name: Disable SELinux
+    #   ansible.posix.selinux:
+    #     state: disabled
+    #   register: selinux_result
+
+    - name: Stop and disable firewalld
+      service:
+        name: firewalld
+        state: stopped
+        enabled: no
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: ensure sysctl.conf updated
+      lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        regexp: "{{ item.regex }}"
+        line: "{{ item.line }}"
+      with_items:
+        - regex: /^vm.swappiness=/
+          line: vm.swappiness=1
+        - regex: /^net.ipv4.tcp_retries2=/
+          line: net.ipv4.tcp_retries2=5
+
+    - name: disable hugepages (Ubuntu)
+      shell: echo never > /sys/kernel/mm/transparent_hugepage/defrag
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: disable hugepages (RHEL)
+      shell: echo never > /sys/kernel/mm/transparent_hugepage/enabled
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+
+    - name: reboot if needed
+      ansible.builtin.reboot:
+      when: reboot_required_file.stat.exists == true
+      # when: selinux_result.reboot_required == true or reboot_required_file.stat.exists == true
+
+    - name: Add mapr repo (RHEL)
+      yum_repository:
+        name: MapR
+        description: “MapR Package Repository”
+        baseurl: "{{ mapr_repo }}/redhat/"
+        gpgcheck: yes
+        gpgkey: "{{ mapr_gpgkey }}"
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Add mapr-eep repo (RHEL)
+      yum_repository:
+        name: MapR-EEP
+        description: “MapR Ecosystem Pack Repository”
+        baseurl: "{{ eep_repo }}/redhat/"
+        gpgcheck: yes
+        gpgkey: "{{ mapr_gpgkey }}"
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Add mapr signing key
+      ansible.builtin.apt_key:
+        url: "{{ mapr_gpgkey }}"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: add mapr repo (Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb {{ mapr_repo }}/ubuntu/ binary bionic"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: add mapr-eep repo (Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb {{ eep_repo }}/ubuntu/ binary bionic"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: delete 127.0.1.1
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^127.0.1.1"
+        state: absent
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: ensure fqdn
+      shell: |
+        ( [ `hostname -f` == `hostname -s` ] && hostnamectl set-hostname {{ ansible_hostname }}.local ) || hostnamectl
+      args:
+        executable: /bin/bash
+
+    - name: update /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^{{ ipv4 }}"
+        line: "{{ ipv4 }} {{ ansible_hostname }}.local {{ ansible_hostname }} {{ cluster_name }}"
+      # when: ansible_facts['os_family'] == "Debian"
+      vars:
+        ipv4: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+
+    - name: install data fabric core packages
+      ansible.builtin.package:
+        name:
+          - mapr-core
+          - mapr-core-internal
+          - mapr-nfs
+          - mapr-hadoop-util
+          - mapr-hadoop-client
+          - mapr-fileserver
+          - mapr-client
+          - mapr-mastgateway
+          - mapr-webserver
+          - mapr-apiserver
+          - mapr-s3server
+          - mapr-kafka
+          - mapr-gateway
+        state: latest
+
+- name: Configure CLDB on first node
+  hosts: "{{ groups['mapr'] | first }}"
+  gather_facts: true
+  become: yes
+
+  tasks:
+    - name: copy private key
+      copy:
+        src: "{{ ssh_private_key_file }}"
+        dest: ~/private.key
+        mode: 0600
+
+    - name: install cldb and zk
+      ansible.builtin.package:
+        name:
+          - mapr-cldb
+          - mapr-zookeeper
+          - mapr-zk-internal
+        state: latest
+
+    - name: check configuration status
+      shell: "grep {{ cluster_name }} /opt/mapr/conf/mapr-clusters.conf"
+      register: cluster_installed
+      ignore_errors: yes
+
+    - name: initial configuration
+      shell: "/opt/mapr/server/configure.sh -N {{ cluster_name }} -C $(hostname -f):7222 -Z $(hostname -f) -u {{ mapr_user }} -g {{ mapr_group }} -genkeys -secure -dare -D {{ mapr_disks }}"
+      when: cluster_installed.rc != 0
+
+    - name: give cldb a minute to start
+      wait_for:
+        timeout: 60
+      delegate_to: localhost
+      when: cluster_installed.rc != 0
+
+    - name: generate ticket
+      shell: |
+        [ -f /tmp/maprticket_{{ mapr_uid }} ] || echo {{ mapr_pass }} | sudo -u {{ mapr_user }} maprlogin password
+
+    - name: wait for CLDB
+      shell: "sudo -u {{ mapr_user }} maprcli dump cldbstate -json | grep CLDB_IS_MASTER_READ_WRITE"
+      register: cldbstate_result
+      until: "cldbstate_result is not failed"
+      retries: 10
+      delay: 10
+
+    - name: copy license file
+      copy:
+        src: LatestDemoLicense-M7.txt
+        dest: /tmp/LatestDemoLicense-M7.txt
+        mode: 0644
+      ignore_errors: true
+
+    - name: Install license
+      shell: |
+        [ -f /tmp/LatestDemoLicense-M7.txt ] && sudo -u {{ mapr_user }} maprcli license add -license /tmp/LatestDemoLicense-M7.txt -is_file true
+      ignore_errors: true
+
+- name: Install CLDB HA nodes
+  hosts: "{{ groups['mapr'][1:2] }}"
+  gather_facts: true
+  become: yes
+
+  tasks:
+    - name: install cldb and zk
+      ansible.builtin.package:
+        name:
+          - mapr-cldb
+          - mapr-zookeeper
+          - mapr-zk-internal
+        state: latest
+
+- name: Configure other nodes
+  hosts: "{{ groups['mapr'][1:] }}"
+  gather_facts: true
+  become: yes
+  vars:
+    zk_nodes: "{{ hostvars.mapr | map(attribute='ansible_fqdn')[0:2] | join(',') }}"
+    cldb_nodes: "{{ hostvars.mapr | map(attribute='ansible_fqdn')[0:2] | join(':7222,') }}:7222"
+    master_node: "{{ hostvars.mapr | map(attribute='ansible_fqdn') | first }}"
+    non_master_nodes: "{{ ( hostvars.mapr | map(attribute='ansible_fqdn') )[1:] }}"
+
+  tasks:
+    - name: check configuration status
+      shell: "grep {{ cluster_name }} /opt/mapr/conf/mapr-clusters.conf"
+      register: cluster_installed
+      ignore_errors: yes
+
+    ### TODO: THIS IS NOT WORKING - and should be adjusted for the number of nodes
+    - name: copy secure files
+      shell: |
+        echo "{{ item }}"
+        # rsync -a -d -i ~/private.key {{ item }} {{ ansible_user }}@{{ non_master_nodes[0] }}:/opt/mapr/conf/
+        # rsync -a -d -i ~/private.key {{ item }} {{ ansible_user }}@{{ non_master_nodes[1] }}:/opt/mapr/conf/
+        # rsync -a -d -i ~/private.key {{ item }} {{ ansible_user }}@{{ non_master_nodes[2] }}:/opt/mapr/conf/
+        # rsync -a -d -i ~/private.key {{ item }} {{ ansible_user }}@{{ non_master_nodes[3] }}:/opt/mapr/conf/
+      with_items: "{{ secure_files }}"
+      when: cluster_installed.failed
+
+    - name: initial configuration
+      shell: "/opt/mapr/server/configure.sh -N {{ cluster_name }} -C {{ cldb_nodes }} -Z {{ zk_nodes }} -u {{ mapr_user }} -g {{ mapr_group }} -secure -dare -D {{ mapr_disks }}"
+      when: cluster_installed.failed
+      # when: cluster_installed.rc != 0
+
+    - name: reconfigure cluster
+      shell: /opt/mapr/server/configure.sh -R
+      when: cluster_installed.rc == 0
+
+    - name: generate ticket
+      shell: |
+        [ -f /tmp/maprticket_{{ mapr_uid }} ] || echo {{ mapr_pass }} | sudo -u {{ mapr_user }} maprlogin password
+
+- name: Finalize settings
+  hosts: mapr
+  gather_facts: true
+  become: yes
+  tasks:
+    - name: ensure mount path
+      ansible.builtin.file:
+        path: "{{ mapr_mount_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: ensure library path
+      lineinfile:
+        path: /etc/profile.d/mapr_library.sh
+        state: present
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        regexp: /^export LD_LIBRARY_PATH=/
+        line: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/mapr/lib
+        create: yes
+
+    - name: install posix client
+      ansible.builtin.package:
+        name:
+          - mapr-posix-client-basic
+        state: latest
+
+    - name: create fuse ticket
+      shell: |
+        sudo -u {{ mapr_user }} maprlogin generateticket -type service -out /opt/mapr/conf/maprfuseticket -duration 3650:0:0 -renewal 9000:0:0 -user {{ mapr_user }}
+
+    - name: Start posix client service
+      ansible.builtin.service:
+        name: mapr-posix-client-basic
+        state: started
+
+    - name: enable spark
+      shell: |
+        [ -f /tmp/maprticket_$(id -u) ] || echo {{ mapr_pass }} | maprlogin password -user {{ mapr_user }}
+        hadoop fs -mkdir /apps/spark
+        hadoop fs -chmod 777 /apps/spark
+        apt install -y mapr-spark mapr-spark-master mapr-spark-historyserver mapr-spark-thriftserver
+        echo "localhost" > /opt/mapr/spark/spark-3.3.1/conf/workers
+        /opt/mapr/spark/spark-3.3.1/sbin/start-workers.sh
+      when: install_eep
+
+    - name: install EEP packages
+      shell: apt install -y mapr-airflow mapr-airflow-webserver mapr-airflow-scheduler mapr-drill mapr-nifi mapr-kafka mapr-zeppelin
+      when: install_eep
+
+    - name: re-configure
+      shell: /opt/mapr/server/configure.sh -R
+      when: install_eep
