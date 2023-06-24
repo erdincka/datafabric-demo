@@ -1,0 +1,104 @@
+---
+- name: Configure VM(s)
+  hosts: core:edge
+
+  tasks:
+    - name: Extend PV
+      shell: 'echo -e "resizepart\n3\n100%\n"| sudo parted /dev/sda ---pretend-input-tty'
+
+    - name: Resize PV
+      community.general.lvg:
+        vg: rl
+        pvs: /dev/sda3
+        pvresize: true
+
+    - name: Extend and resize root partition
+      community.general.lvol:
+        vg: rl
+        lv: root
+        size: +100%FREE
+        resizefs: true
+
+    - name: update PAM for sshd
+      lineinfile:
+        path: /etc/pam.d/sshd
+        state: present
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        regexp: /session\s*required\s*pam_loginuid.so/
+        line: session optional pam_loginuid.so
+
+    - name: update PAM limits for session
+      lineinfile:
+        path: /etc/pam.d/common-session
+        state: present
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        create: yes
+        line: session       required       pam_limits.so
+
+    - name: Stop and disable firewalld
+      service:
+        name: firewalld
+        state: stopped
+        enabled: no
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: ensure sysctl.conf updated
+      lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        regexp: "{{ item.regex }}"
+        line: "{{ item.line }}"
+      with_items:
+        - regex: /^vm.swappiness=/
+          line: vm.swappiness=1
+        - regex: /^net.ipv4.tcp_retries2=/
+          line: net.ipv4.tcp_retries2=5
+
+    - name: disable hugepages (Ubuntu)
+      shell: echo never > /sys/kernel/mm/transparent_hugepage/defrag
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: disable hugepages (RHEL)
+      shell: echo never > /sys/kernel/mm/transparent_hugepage/enabled
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: enable proxy for yum
+      ansible.builtin.lineinfile:
+        path: /etc/yum.conf
+        line: "proxy={{ proxy }}"
+      when: proxy is defined
+
+    - name: install packages
+      ansible.builtin.package:
+        name:
+          - java-11-openjdk
+          - java-11-openjdk-devel
+          - epel-release
+          - ca-certificates
+        state: latest
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: delete 127.0.1.1
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^127.0.1.1"
+        state: absent
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: ensure fqdn
+      shell: |
+        ( [ `hostname -f` == `hostname -s` ] && hostnamectl set-hostname {{ ansible_hostname }}.{{ domain }} ) || hostnamectl
+        # echo "$(hostname -i) $(hostname -f) $(hostname -s)" >> /etc/hosts 
+        hostname $(hostname -f)
+      args:
+        executable: /bin/bash

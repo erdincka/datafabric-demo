@@ -59,12 +59,12 @@ echo "${MAPR_HOST_IP} ${MAPR_CLUSTER}" | sudo tee -a /etc/hosts
 
 for file in "ssl_truststore" "ssl_truststore.pem" "ssl-client.xml" "maprtrustcreds.jceks" "maprtrustcreds.conf"
 do
-  scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/$file ~/
+  echo ${MAPR_PASS} | scp ${MAPR_USER}@${MAPR_HOST_IP}:/opt/mapr/conf/$file ~/
   sudo cp ~/$file /opt/mapr/conf/
 done
 
-  sudo mv ssl_truststore ssl_truststore.pem ssl-client.xml maprtrustcreds.jceks maprtrustcreds.conf /opt/mapr/conf/
-  sudo /opt/mapr/server/configure.sh -c -N ${MAPR_CLUSTER} -C ${MAPR_HOST_IP}:7222 -HS ${MAPR_HOST_IP} -u mapr -g mapr -secure
+  # sudo mv ssl_truststore ssl_truststore.pem ssl-client.xml maprtrustcreds.jceks maprtrustcreds.conf /opt/mapr/conf/
+  sudo /opt/mapr/server/configure.sh -c -N ${MAPR_CLUSTER} -C ${MAPR_HOST_IP}:7222 -u mapr -g mapr -secure
   maprlogin password -user mapr
 
 # Enable services

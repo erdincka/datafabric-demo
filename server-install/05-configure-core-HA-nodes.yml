@@ -1,0 +1,30 @@
+---
+- name: Install CLDB HA node
+  hosts: core[1]
+
+  tasks:
+    - name: install cldb
+      ansible.builtin.package:
+        name:
+          - mapr-cldb
+        state: latest
+
+- name: Install ZK HA nodes
+  hosts: core[1:2]
+  gather_facts: true
+
+  tasks:
+    - name: install zk
+      ansible.builtin.package:
+        name:
+          - mapr-zookeeper
+          - mapr-zk-internal
+        state: latest
+
+    - name: copy tokens
+      ansible.posix.synchronize:
+        src: /opt/mapr/conf/tokens
+        dest: /opt/mapr/conf/
+        mode: push
+        private_key: ~/private.key
+      delegate_to: "{{ groups['core'] | first }}"

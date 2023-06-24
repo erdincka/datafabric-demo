@@ -1,0 +1,123 @@
+---
+- name: Install MapR
+  hosts: core:edge
+
+  tasks:
+    - name: ensure mapr group
+      ansible.builtin.group:
+        name: "{{ mapr_group }}"
+        state: present
+        gid: "{{ mapr_gid }}"
+
+    - name: ensure user
+      ansible.builtin.user:
+        name: "{{ mapr_user }}"
+        comment: Ezmeral Admin
+        uid: "{{ mapr_uid }}"
+        group: "{{ mapr_group }}"
+        shell: /bin/bash
+        password: "{{ mapr_pass | password_hash('sha512', 'secretsalt') }}"
+        update_password: on_create
+
+    - name: ensure user group
+      ansible.builtin.group:
+        name: "ad_users"
+        state: present
+        gid: 513
+
+    - name: enable ssh key for mapr user
+      shell: |
+        [ -d ~{{ mapr_user }}/.ssh ] || mkdir ~{{ mapr_user }}/.ssh
+        [ -f ~{{ mapr_user }}/.ssh/authorized_keys ] || cp ~{{ ansible_user }}/.ssh/authorized_keys ~{{ mapr_user }}/.ssh/authorized_keys
+        chown -R {{ mapr_user }} ~{{ mapr_user }}/.ssh
+        chmod -R go-rwx ~{{ mapr_user }}/.ssh
+
+    - name: ensure passwordless sudo for mapr user
+      ansible.builtin.lineinfile:
+        path: "/etc/sudoers.d/{{ mapr_user }}"
+        state: present
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        line: "{{ mapr_user }}  ALL=(ALL) NOPASSWD:ALL"
+        create: yes
+
+    - name: Add mapr repo (RHEL)
+      yum_repository:
+        name: MapR
+        description: “MapR Package Repository”
+        baseurl: "{{ mapr_repo }}/redhat"
+        gpgcheck: yes
+        gpgkey: "{{ mapr_gpgkey }}"
+        file: mapr.repo
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Add mapr-eep repo (RHEL)
+      yum_repository:
+        name: MapR-EEP
+        description: “MapR Ecosystem Pack Repository”
+        baseurl: "{{ eep_repo }}/redhat"
+        gpgcheck: yes
+        gpgkey: "{{ mapr_gpgkey }}"
+        file: mapr.repo
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Add mapr signing key
+      ansible.builtin.apt_key:
+        url: "{{ mapr_gpgkey }}"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: add mapr repo (Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb {{ mapr_repo }}/ubuntu/ binary bionic"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: add mapr-eep repo (Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb {{ eep_repo }}/ubuntu/ binary bionic"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: install data fabric core packages
+      ansible.builtin.package:
+        name:
+          - mapr-core
+          - mapr-core-internal
+          - mapr-nfs
+          - mapr-hadoop-util
+          - mapr-hadoop-client
+          - mapr-fileserver
+          - mapr-client
+          - mapr-mastgateway
+          - mapr-webserver
+          - mapr-apiserver
+          - mapr-s3server
+          - mapr-kafka
+          - mapr-gateway
+          - mapr-data-access-gateway
+        state: latest
+
+    - name: ensure unique hostid
+      shell: |
+        /opt/mapr/server/mruuidgen > /opt/mapr/hostid
+        rm -f /opt/mapr/conf/hostid.*
+        cat /opt/mapr/hostid > /opt/mapr/conf/hostid.$$
+
+    - name: Disable SELinux
+      ansible.posix.selinux:
+        state: disabled
+      register: selinux_result
+
+    - name: check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: reboot if needed
+      ansible.builtin.reboot:
+      # when: reboot_required_file.stat.exists == true
+      when: selinux_result.reboot_required == true or (reboot_required_file.skipped == false and reboot_required_file.stat.exists == true)

@@ -1,0 +1,60 @@
+---
+- name: Configure EEP on core
+  hosts: core
+  vars:
+    mapr_hosts_fqdn: "{{ groups['core'] | map('extract', hostvars, 'ansible_fqdn') | list }}"
+  tasks:
+    - name: ensure library path
+      lineinfile:
+        path: /etc/profile.d/mapr_library.sh
+        state: present
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        regexp: /^export LD_LIBRARY_PATH=/
+        line: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/mapr/lib
+        create: yes
+
+    - name: Install spark
+      ansible.builtin.package:
+        name:
+          - mapr-spark
+          - mapr-spark-master
+          - mapr-spark-historyserver
+          - mapr-spark-thriftserver
+          # - mapr-livy
+        state: latest
+
+    - name: Configure and start spark
+      shell: |
+        # [ -f /tmp/maprticket_$(id -u) ] || echo {{ mapr_pass }} | maprlogin password -user {{ mapr_user }}
+        [ -f /opt/mapr/spark/spark-3.3.2/conf/workers ] || echo "{{ groups['core'] | last }}" > /opt/mapr/spark/spark-3.3.2/conf/workers
+        /opt/mapr/spark/spark-3.3.2/sbin/start-workers.sh
+
+    - name: install EEP packages
+      ansible.builtin.package:
+        name:
+          - mapr-airflow
+          - mapr-airflow-webserver
+          - mapr-airflow-scheduler
+          - mapr-drill
+          - mapr-nifi
+          - mapr-kafka
+          - mapr-zeppelin
+          - mapr-opentsdb
+          - mapr-collectd
+          - mapr-grafana
+        state: latest
+      when: install_eep
+
+    - name: re-configure eep
+      shell: /opt/mapr/server/configure.sh -R -OT "{{ groups['core'] | join(',') }}"
+      when: install_eep
+
+    - name: start data collection
+      shell: |
+        # maprcli node services -name nodemanager -nodes {{ groups['core'] | join(' ') }} -action restart
+        # maprcli node services -name resourcemanager -nodes {{ groups['core'] | join(' ') }} -action restart
+        /opt/mapr/opentsdb/opentsdb-2.4.1/etc/init.d/opentsdb start
+      ignore_errors: yes

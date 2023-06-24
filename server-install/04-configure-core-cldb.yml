@@ -1,0 +1,47 @@
+---
+- name: Configure CLDB on core1
+  hosts: core[0]
+  tasks:
+    - name: copy private key
+      copy:
+        src: "{{ ssh_private_key_file }}"
+        dest: ~/private.key
+        mode: 0600
+
+    - name: install cldb and zk
+      ansible.builtin.package:
+        name:
+          - mapr-cldb
+          - mapr-zookeeper
+          - mapr-zk-internal
+        state: latest
+
+    - name: check configuration status
+      shell: "[ -f /opt/mapr/conf/mapr-clusters.conf ] && grep {{ cluster_name_core }} /opt/mapr/conf/mapr-clusters.conf"
+      register: cluster_installed
+      ignore_errors: yes
+
+    - name: initial configuration
+      shell: "/opt/mapr/server/configure.sh -N {{ cluster_name_core }} -C $(hostname -i):7222 -Z $(hostname -i) -genkeys -secure -D {{ mapr_disks }}"
+      when: cluster_installed.rc != 0
+
+    - name: create user ticket
+      shell: |
+        [ -f /tmp/maprticket_{{ mapr_uid }} ] || echo {{ mapr_pass }} | sudo -u {{ mapr_user }} maprlogin password
+      register: cldbstate_result
+      until: "cldbstate_result is not failed"
+      retries: 10
+      delay: 30
+      when: cluster_installed.rc != 0
+
+    - name: copy license file
+      copy:
+        src: LatestDemoLicense-M7.txt
+        dest: /tmp/LatestDemoLicense-M7.txt
+        mode: 0644
+      ignore_errors: true
+
+    - name: Install license
+      shell: |
+        [ -f /tmp/LatestDemoLicense-M7.txt ] && sudo -u {{ mapr_user }} maprcli license add -license /tmp/LatestDemoLicense-M7.txt -is_file true
+      ignore_errors: true

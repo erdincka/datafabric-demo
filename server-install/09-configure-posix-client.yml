@@ -1,0 +1,23 @@
+---
+- name: Configure Posix Client
+  hosts: core:edge
+  tasks:
+    - name: ensure mount path
+      ansible.builtin.file:
+        path: "/mapr"
+        state: directory
+        mode: "0755"
+    - name: install posix client
+      ansible.builtin.package:
+        name:
+          - mapr-posix-client-basic
+        state: latest
+
+    - name: create fuse ticket
+      shell: |
+        [ -f /opt/mapr/conf/maprfuseticket ] || sudo -u {{ mapr_user }} maprlogin generateticket -type service -out /opt/mapr/conf/maprfuseticket -duration 3650:0:0 -renewal 9000:0:0 -user {{ mapr_user }}
+
+    - name: Start posix client service
+      ansible.builtin.service:
+        name: mapr-posix-client-basic
+        state: started

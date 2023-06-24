@@ -1,0 +1,36 @@
+- name: Configure core nodes
+  hosts: core
+  vars:
+    mapr_hosts_fqdn: "{{ groups['core'] | map('extract', hostvars, 'ansible_fqdn') | list }}"
+    zk_nodes: "{{ mapr_hosts_fqdn[0:3] | join(',') }}"
+    cldb_nodes: "{{ mapr_hosts_fqdn[0:2] | join(':7222,') }}:7222"
+    master_node: "{{ mapr_hosts_fqdn | first }}"
+    non_master_nodes: "{{ ( mapr_hosts_fqdn )[1:] }}"
+
+  tasks:
+    - name: check configuration status
+      shell: "( [ -f /opt/mapr/conf/mapr-clusters.conf ] && grep {{ cluster_name_core }} /opt/mapr/conf/mapr-clusters.conf)"
+      register: cluster_installed
+      ignore_errors: yes
+
+    - name: copy secure files
+      ansible.posix.synchronize:
+        src: "/opt/mapr/conf/{{ item }}"
+        dest: "/opt/mapr/conf/{{ item }}"
+        mode: push
+      delegate_to: "{{ groups['core'] | first }}"
+      loop: "{{ secure_files }}"
+      when: cluster_installed.failed and inventory_hostname != (groups['core'] | first)
+
+    - name: join nodes to the cluster
+      shell: "/opt/mapr/server/configure.sh -N {{ cluster_name_core }} -C {{ cldb_nodes }} -Z {{ zk_nodes }} -u {{ mapr_user }} -g {{ mapr_group }} -secure -dare -D {{ mapr_disks }}"
+      when: cluster_installed.failed
+
+    - name: reconfigure cluster
+      shell: /opt/mapr/server/configure.sh -R
+      when: cluster_installed.failed
+      # when: cluster_installed.rc == 0
+
+    - name: refresh user ticket
+      shell: |
+        [ -f /tmp/maprticket_{{ mapr_uid }} ] || echo {{ mapr_pass }} | sudo -u {{ mapr_user }} maprlogin password
